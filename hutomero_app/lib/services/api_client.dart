@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
 import '../models/mobile_alert.dart';
@@ -54,57 +55,67 @@ class ApiClient {
       return jsonList
           .map((e) => MobileAlert.fromJson(e as Map<String, dynamic>))
           .toList();
-    } on FormatException {
+    } on Exception {
       // The server returned HTML (rendered page). Parse the table and
-      // extract rows into MobileAlert objects.
+      // extract rows into MobileAlert objects. Be tolerant of tables that
+      // omit a <tbody> and rely on `data-label` attributes where present.
       final body = resp.body;
       final doc = html_parser.parse(body);
 
-      // Look for the table rows inside a tbody
-      final rows = doc.querySelectorAll('table tbody tr');
-      if (rows.isNotEmpty) {
-        final List<MobileAlert> alerts = [];
-        for (final row in rows) {
-          final cells = row.querySelectorAll('td');
-          if (cells.length < 6) continue; // unexpected row
+      // Try a couple of selectors: rows inside tbody, or any table rows.
+      var rows = doc.querySelectorAll('table tbody tr');
 
-          try {
-            final sensorId = int.tryParse(cells[0].text.trim()) ?? 0;
-            final valueRaw = cells[1].text.trim().replaceAll(',', '.');
-            final value = double.tryParse(valueRaw) ?? 0.0;
-            final type = cells[2].text.trim();
-            final status = cells[3].text.trim();
-            final comment = cells[4].text.trim();
-            final createdAtStr = cells[5].text.trim();
-            final createdAt = DateTime.tryParse(createdAtStr) ?? DateTime.now();
+      final List<MobileAlert> alerts = [];
+      for (final row in rows) {
+        final cells = row.querySelectorAll('td');
+        if (cells.isEmpty) continue; // not a data row
 
-            alerts.add(MobileAlert(
-              id: 0,
-              value: value,
-              type: type,
-              status: status,
-              comment: comment.isEmpty ? null : comment,
-              createdAt: createdAt,
-              sensorId: sensorId,
-              sensorName: '',
-              deviceId: 0,
-              deviceName: '',
-              min: null,
-              max: null,
-            ));
-          } catch (_) {
-            // skip malformed row
-            continue;
+        // Build a map of data-label -> text when available so parsing
+        // doesn't rely strictly on column order.
+        final Map<String, String> labelled = {};
+        for (final td in cells) {
+          final label = td.attributes['data-label']?.trim() ?? '';
+          final text = td.text.trim();
+          if (label.isNotEmpty) {
+            labelled[label] = text;
           }
         }
 
-        if (alerts.isNotEmpty) return alerts;
+        try {
+          // Prefer labelled values, fall back to index-based parsing.
+          final sensorIdStr = labelled['Szenzor ID'] ?? (cells.isNotEmpty ? cells[0].text.trim() : '0');
+          final sensorId = int.tryParse(sensorIdStr.replaceAll(RegExp('[^0-9]'), '')) ?? 0;
+
+          final valueRaw = labelled['Értek'] ?? (cells.length > 1 ? cells[1].text.trim() : '0');
+          final value = double.tryParse(valueRaw.replaceAll(',', '.')) ?? 0.0;
+
+          final type = labelled['Típus'] ?? (cells.length > 2 ? cells[2].text.trim() : '');
+          final status = labelled['Státusz'] ?? (cells.length > 3 ? cells[3].text.trim() : '');
+          final comment = labelled['Megjegyzés'] ?? (cells.length > 4 ? cells[4].text.trim() : '');
+          final createdAtStr = labelled['Időpont'] ?? (cells.length > 5 ? cells[5].text.trim() : '');
+          final createdAt = DateTime.tryParse(createdAtStr) ?? DateTime.now();
+
+          alerts.add(MobileAlert(
+            id: 0,
+            value: value,
+            type: type,
+            status: status,
+            comment: comment.isEmpty ? null : comment,
+            createdAt: createdAt,
+            sensorId: sensorId,
+            sensorName: '',
+            deviceId: 0,
+            deviceName: '',
+            min: null,
+            max: null,
+          ));
+        } catch (_) {
+          // Skip malformed row
+          continue;
+        }
       }
 
-      // No parsable rows found — provide a helpful error including a short
-      // HTML snippet so the server-rendered output can be inspected.
-      final snippet = body.length > 300 ? body.substring(0, 300) + '...' : body;
-      throw Exception('Expected JSON but server returned HTML/other. Snippet: $snippet');
+      return alerts;
     }
   }
 }
