@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/mobile_alert.dart';
 import '../services/api_client.dart';
+import '../services/notification_service.dart';
 
 class AlertsPage extends StatefulWidget {
   final ApiClient api;
@@ -14,6 +15,7 @@ class AlertsPage extends StatefulWidget {
 
 class _AlertsPageState extends State<AlertsPage> {
   late Future<List<MobileAlert>> futureAlerts;
+  Map<int, MobileAlert>? _previousBySensor;
 
   @override
   void initState() {
@@ -52,6 +54,33 @@ class _AlertsPageState extends State<AlertsPage> {
           if (cards.isEmpty) {
             return const Center(child: Text('Nincs aktív riasztás.'));
           }
+
+          // Detect changes compared to previous fetch and notify once per change.
+          final List<MobileAlert> changed = [];
+          if (_previousBySensor != null) {
+            for (final entry in bySensor.entries) {
+              final prev = _previousBySensor![entry.key];
+              final cur = entry.value;
+              final bool isChanged = prev == null || prev.status != cur.status || prev.type != cur.type || prev.value != cur.value;
+              if (isChanged) changed.add(cur);
+            }
+          }
+
+          if (changed.isNotEmpty) {
+            Future.microtask(() async {
+              final svc = NotificationService();
+              for (final a in changed) {
+                final title = a.sensorName.isNotEmpty ? '${a.sensorName} - ${a.deviceName}' : 'Szenzor #${a.sensorId} - ${a.deviceName}';
+                final body = '${a.type} • ${a.value.toStringAsFixed(1)} • ${a.status}';
+                try {
+                  await svc.showWarningChanged(id: a.sensorId, title: title, body: body);
+                } catch (_) {}
+              }
+            });
+          }
+
+          // update previous snapshot
+          _previousBySensor = Map<int, MobileAlert>.from(bySensor);
 
           return RefreshIndicator(
             onRefresh: () async {
