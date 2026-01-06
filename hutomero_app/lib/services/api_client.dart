@@ -34,10 +34,15 @@ class ApiClient {
     return null;
   }
 
-  Future<List<Sensor>> getSensors() async {
+  Future<List<Sensor>> getSensors(String? cookie) async {
     final uri = Uri.parse('$baseUrl/api/latest-sensor-data');
+    
+    final headers = <String, String>{};
+    if (cookie != null) {
+      headers['Cookie'] = cookie;
+    }
 
-    final resp = await http.get(uri);
+    final resp = await http.get(uri, headers: headers);
 
     if (resp.statusCode != 200) {
       throw Exception('Failed to load sensors: ${resp.statusCode} ${resp.body}');

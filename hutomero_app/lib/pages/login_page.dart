@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_client.dart';
 import '../config.dart';
-import 'alerts_page.dart';
+import 'home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -46,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
       Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (_) => AlertsPage(api: api, sessionCookie: cookie),
+        builder: (_) => HomePage(api: api, sessionCookie: cookie),
       ));
     } catch (e) {
       setState(() {
