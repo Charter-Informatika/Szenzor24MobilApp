@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
 import '../models/mobile_alert.dart';
+import '../models/sensor.dart';
 
 class ApiClient {
   final String baseUrl;
@@ -32,6 +32,21 @@ class ApiClient {
       return setCookie.split(';').first.trim();
     }
     return null;
+  }
+
+  Future<List<Sensor>> getSensors() async {
+    final uri = Uri.parse('$baseUrl/api/latest-sensor-data');
+
+    final resp = await http.get(uri);
+
+    if (resp.statusCode != 200) {
+      throw Exception('Failed to load sensors: ${resp.statusCode} ${resp.body}');
+    }
+
+    final List<dynamic> jsonList = jsonDecode(resp.body) as List<dynamic>;
+    return jsonList
+        .map((e) => Sensor.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<List<MobileAlert>> getAlerts(String? cookie) async {
