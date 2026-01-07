@@ -89,86 +89,57 @@ class _AlertsPageState extends State<AlertsPage> {
               });
             },
             child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
               itemCount: cards.length,
               itemBuilder: (context, index) {
                 final a = cards[index];
 
                 return Card(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  color: Colors.grey[900],
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  color: Theme.of(context).cardColor,
+                  child: ListTile(
+                      dense: true,
+                      visualDensity: const VisualDensity(vertical: -2),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      leading: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.redAccent.withOpacity(0.12),
+                        child: const Icon(Icons.warning_rounded, color: Colors.redAccent, size: 18),
+                      ),
+                      title: Text(
+                        a.sensorName.trim().isNotEmpty ? a.sensorName : (a.deviceName.trim().isNotEmpty ? a.deviceName : 'Ismeretlen szenzor'),
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Theme.of(context).textTheme.titleMedium?.color),
+                      ),
+                      subtitle: Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          Text(
+                            '${a.deviceName.isNotEmpty ? a.deviceName + ' • ' : ''}${_formatDateTime(a.createdAt)}',
+                            style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
                           children: [
-                            Expanded(
-                              child: Text(
-                                a.sensorName,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              a.deviceName,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[400],
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              a.value.toStringAsFixed(1),
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.redAccent,
-                              ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                _buildTypeChip(a.type),
-                              ],
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              _limitTextForType(a.type),
-                              style: TextStyle(
-                                color: Colors.red[300],
-                                fontSize: 13,
-                              ),
-                            ),
-                            Text(
-                              _formatDateTime(a.createdAt),
-                              style: TextStyle(
-                                color: Colors.grey[500],
-                                fontSize: 11,
-                              ),
-                            ),
+                            _buildTypeChip(a.type),
+                            _buildStatusChip(a.status),
                           ],
                         ),
                       ],
+                    ),
+                    trailing: SizedBox(
+                      width: 64,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(a.value.toStringAsFixed(1), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                      ),
                     ),
                   ),
                 );
@@ -201,17 +172,17 @@ Widget _buildTypeChip(String type) {
   }
 
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
     decoration: BoxDecoration(
-      color: color.withOpacity(0.2),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: color),
+      color: color.withOpacity(0.18),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: color.withOpacity(0.9), width: 0.9),
     ),
     child: Text(
       text,
       style: TextStyle(
         color: color,
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: FontWeight.w500,
       ),
     ),
@@ -224,17 +195,17 @@ Widget _buildStatusChip(String status) {
   final String text = active ? 'Aktív' : status;
 
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
     decoration: BoxDecoration(
-      color: color.withOpacity(0.15),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: color),
+      color: color.withOpacity(0.12),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: color.withOpacity(0.95), width: 0.9),
     ),
     child: Text(
       text,
       style: TextStyle(
         color: color,
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: FontWeight.w500,
       ),
     ),

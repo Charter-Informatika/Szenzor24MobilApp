@@ -16,7 +16,10 @@ class HomePage extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Okoshűtő'),
+          elevation: 2,
           bottom: const TabBar(
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicatorWeight: 3,
             tabs: [
               Tab(text: 'Szenzorok'),
               Tab(text: 'Riasztások'),

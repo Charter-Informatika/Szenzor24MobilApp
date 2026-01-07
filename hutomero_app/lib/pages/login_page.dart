@@ -60,38 +60,58 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Bejelentkezés')),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _emailCtrl,
-              decoration: const InputDecoration(labelText: 'Email'),
-              keyboardType: TextInputType.emailAddress,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _emailCtrl,
+                      decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _passCtrl,
+                      decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock_outline)),
+                      obscureText: true,
+                    ),
+                    const SizedBox(height: 20),
+                    if (_error != null) ...[
+                      Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: Colors.redAccent),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(_error!, style: const TextStyle(color: Colors.red))),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _loading ? null : _doLogin,
+                        icon: _loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.login_rounded),
+                        label: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 14.0),
+                          child: Text(_loading ? 'Bejelentkezés...' : 'Bejelentkezés'),
+                        ),
+                        style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _passCtrl,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            const SizedBox(height: 20),
-            if (_error != null) ...[
-              Text(_error!, style: const TextStyle(color: Colors.red)),
-              const SizedBox(height: 8),
-            ],
-            ElevatedButton(
-              onPressed: _loading ? null : _doLogin,
-              child: _loading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Bejelentkezés'),
-            ),
-          ],
+          ),
         ),
       ),
     );

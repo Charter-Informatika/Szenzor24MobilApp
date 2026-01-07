@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Okoshűtő riasztások',
+      title: 'Szenzor24 Mobil',
       theme: ThemeData.dark(),
       home: const LoginPage(),
     );
