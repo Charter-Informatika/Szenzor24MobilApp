@@ -217,16 +217,3 @@ String _formatDateTime(DateTime dt) {
   return '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} '
       '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
 }
-
-String _limitTextForType(String type) {
-  switch (type) {
-    case 'alatt':
-      return 'Túl alacsony érték';
-    case 'felett':
-      return 'Túl magas érték';
-    case 'hiba':
-      return 'Szenzor hiba';
-    default:
-      return 'Kívül a határértéken';
-  }
-}

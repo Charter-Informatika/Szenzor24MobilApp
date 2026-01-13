@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:hutomero_app/models/device.dart';
 import '../models/mobile_alert.dart';
 import '../models/sensor.dart';
 
@@ -22,7 +23,7 @@ class ApiClient {
 
     final redirectLocation = resp.headers['location'] ?? '';
     if ((resp.statusCode != 200 || resp.statusCode != 302) && redirectLocation.contains('login')) {
-      throw Exception('Login failed: ${resp.statusCode} ${resp.body}');
+      throw Exception('Login failed!');
     }
 
     final setCookie = resp.headers['set-cookie'];
@@ -34,7 +35,7 @@ class ApiClient {
   }
 
   Future<List<Sensor>> getSensors(String? cookie) async {
-    final uri = Uri.parse('$baseUrl/api/latest-sensor-data');
+    final uri = Uri.parse('$baseUrl/api/latest-sensor-data?_t=${DateTime.now().toUtc().millisecondsSinceEpoch}');
     
     final headers = <String, String>{};
     if (cookie != null) {
@@ -44,7 +45,7 @@ class ApiClient {
     final resp = await http.get(uri, headers: headers);
 
     if (resp.statusCode != 200) {
-      throw Exception('Failed to load sensors: ${resp.statusCode} ${resp.body}');
+      throw Exception('Failed to load sensors!');
     }
 
     final List<dynamic> jsonList = jsonDecode(resp.body) as List<dynamic>;
@@ -64,15 +65,50 @@ class ApiClient {
     }
 
     final resp = await http.get(uri, headers: headers);
-
-    // Try parsing JSON first. The server may return a rendered HTML page
-    // (302/HTML) containing the warnings; in that case we attempt to
-    // extract a JSON array embedded in the HTML. Do not fail immediately
-    // on non-200 status codes — parse the body instead.
+    if (resp.statusCode != 200) {
+      throw Exception('hibás lekérés!');
+    }
 
     final List<dynamic> jsonList = jsonDecode(resp.body) as List<dynamic>;
     return jsonList
         .map((e) => MobileAlert.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+  Future<List<Device>> getAllDevices(String? cookie) async {
+    final uri = Uri.parse('$baseUrl/api/mobile/devices-with-sensors');
+
+    final headers = <String, String>{};
+    if (cookie != null) {
+      headers['Cookie'] = cookie;
+    } else {
+      throw Exception('Nincs érvényes munkamenet süti a riasztások lekéréséhez.');
+    }
+
+    final resp = await http.get(uri, headers: headers);
+    if (resp.statusCode != 200) {
+      throw Exception('hibás lekérés!');
+    }
+
+    final List<dynamic> jsonList = jsonDecode(resp.body) as List<dynamic>;
+
+    final List<Device> devices = [];
+    for (var i = 0; i < jsonList.length; i++) {
+      final item = jsonList[i];
+      try {
+        if (item is Map<String, dynamic>) {
+          devices.add(Device.fromJson(item));
+        } else if (item is Map) {
+          // loosely typed map
+          devices.add(Device.fromJson(Map<String, dynamic>.from(item)));
+        } else {
+          throw Exception('Unexpected device JSON item at index $i: not an object');
+        }
+      } catch (e) {
+        // include the offending item in the error to help debugging
+        throw Exception('Failed to parse device at index $i: $e — data: ${item.toString()}');
+      }
+    }
+
+    return devices;
   }
 }

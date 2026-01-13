@@ -15,8 +15,10 @@ class Sensor {
   });
 
   factory Sensor.fromJson(Map<String, dynamic> json) {
-    String typeStr = (json['type'] as String).toLowerCase();
-    SensorType sensorType = SensorType.fromString(typeStr);
+    String? typeStr = (json['type'] as String?)?.toLowerCase();
+    String fixedTypeStr = typeStr ?? (json['sensor_type'] as String?)?.toLowerCase() ?? 'unknown';
+
+    SensorType sensorType = SensorType.fromString(fixedTypeStr);
 
 
     return Sensor(
